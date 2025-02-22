@@ -1,5 +1,5 @@
 # YF
-YF Options Data Puller 
+YF Stock Options Data Scraper
 This is a Yahoo Finance Options Data Scraper Tool, which help you get the options data of all US stocks, all you need to do is to type the ticker name of the listed company whose data you want to fetch. 
 Step by step :- 
 Copy the code
