@@ -1,0 +1,55 @@
+#import all the important libraries
+import yfinance as yf
+import pandas as pd
+from datetime import datetime, timedelta
+import datetime
+
+#define the functions for data
+def get_options(symbol):
+# Create a Ticker object
+opt = yf.Ticker(symbol)
+# Retrieve all available option expiration dates
+expirations = opt.options
+# Prepare an empty DataFrame to store combined data
+options = pd.DataFrame()
+# Loop through each expiration date and fetch calls/puts
+for e in expirations:
+opt_chain = opt.option_chain(e)
+calls = pd.DataFrame(opt_chain.calls)
+puts = pd.DataFrame(opt_chain.puts)
+# Label calls and puts
+calls['optionType'] = 'call'
+puts['optionType'] = 'put'
+# Add expiration date to each row
+calls['expirationDate'] = e
+puts['expirationDate'] = e
+# Concatenate into one DataFrame
+options = pd.concat([options, calls, puts], ignore_index=True)
+# Convert expirationDate to a proper datetime format
+options['expirationDate'] = pd.to_datetime(options['expirationDate'])
+# Calculate days to expiration (dte) as fraction of a year
+options['dte'] = (options['expirationDate'] - datetime.datetime.today()).dt.days / 365.0
+options['dte'] = options['dte'].round(2)
+# Convert contractSymbol to string (sometimes helpful for downstream operations)
+options['contractSymbol'] = options['contractSymbol'].astype(str)
+# Ensure strike is numeric
+options['strike'] = pd.to_numeric(options['strike'], errors='coerce')
+# Identifying call options through a boolean column
+options["CALL"] = options["contractSymbol"].str[4].apply(lambda x: 'C' in x)
+# Converting columns to numeric
+options[['bid','ask','strike']] = options[['bid','ask','strike']].apply(pd.to_numeric)
+# Calculate the midpoint (between bid and ask)
+options['midpoint'] = (options['bid'] + options['ask']) / 2
+# Removing unnecessary columns
+options = options.drop(columns=[
+'contractSize',
+'currency',
+'change',
+'percentChange',
+'lastTradeDate',
+'lastPrice' ])
+return options
+
+#change the ticker below if you'd like. 
+get_options('FLS')
+
